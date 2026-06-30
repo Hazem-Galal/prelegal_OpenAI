@@ -1,0 +1,106 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# mypy / pyright / ruff
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+.ruff_cache/
+
+# ── FastAPI / Uvicorn ────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Next.js ─────────────────────────────────────────────────────────────────
+.next/
+out/
+.vercel/
+.turbo/
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build output
+/build
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Environment & secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+*.pem
+secrets/
+
+# ── Editors & OS ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── Docker ───────────────────────────────────────────────────────────────────
+*.dockerignore
+
+# ── Database / migrations ────────────────────────────────────────────────────
+*.sqlite3
+*.db
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+.tmp/
+tmp/
