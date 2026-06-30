@@ -39,6 +39,40 @@ export const defaultMndaFormValues: MndaFormValues = {
   jurisdiction: "",
 };
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const defaultPurposePattern = new RegExp(`\\[${escapeRegExp(defaultPurpose)}\\]`);
+
+/**
+ * Replaces `pattern` with the result of `build()`. Uses a replacer function (not a string) so
+ * literal `$` sequences in user input are never reinterpreted by String.replace, and warns in
+ * development if the pattern didn't match, since that means the template text and this regex
+ * have drifted out of sync and the placeholder will silently remain unfilled.
+ */
+function replaceTemplate(
+  template: string,
+  pattern: RegExp,
+  build: () => string,
+  label: string
+): string {
+  let matched = false;
+  const result = template.replace(pattern, () => {
+    matched = true;
+    return build();
+  });
+  if (process.env.NODE_ENV !== "production" && !matched) {
+    console.warn(`mnda template: pattern for "${label}" did not match`);
+  }
+  return result;
+}
+
+/** Coerces possibly-invalid year counts (NaN, 0, negative) to a sane positive default. */
+function sanitizeYears(years: number): number {
+  return Number.isFinite(years) && years >= 1 ? years : 1;
+}
+
 function formatDate(value: string): string {
   if (!value) return "[Today’s date]";
   const date = new Date(`${value}T00:00:00`);
@@ -52,13 +86,13 @@ function formatDate(value: string): string {
 
 function describeMndaTerm(values: MndaFormValues): string {
   return values.mndaTermType === "expires"
-    ? `${values.mndaTermYears} year(s) from Effective Date`
+    ? `${sanitizeYears(values.mndaTermYears)} year(s) from Effective Date`
     : "until terminated in accordance with the terms of the MNDA";
 }
 
 function describeConfidentialityTerm(values: MndaFormValues): string {
   return values.confidentialityTermType === "duration"
-    ? `${values.confidentialityTermYears} year(s) from Effective Date`
+    ? `${sanitizeYears(values.confidentialityTermYears)} year(s) from Effective Date`
     : "in perpetuity";
 }
 
@@ -71,46 +105,69 @@ function highlight(value: string): string {
 export function fillCoverPage(template: string, values: MndaFormValues): string {
   let result = template;
 
-  result = result.replace(
-    /\[Evaluating whether to enter into a business relationship with the other party\.\]/,
-    values.purpose || defaultPurpose
+  result = replaceTemplate(
+    result,
+    defaultPurposePattern,
+    () => values.purpose || defaultPurpose,
+    "Purpose"
   );
 
-  result = result.replace(/\[Today.s date\]/, formatDate(values.effectiveDate));
+  result = replaceTemplate(
+    result,
+    /\[Today.s date\]/,
+    () => formatDate(values.effectiveDate),
+    "Effective Date"
+  );
 
-  result = result.replace(
+  result = replaceTemplate(
+    result,
     /- \[(?:x| )\]\s+Expires \[1 year\(s\)\] from Effective Date\.\r?\n- \[(?:x| )\]\s+Continues until terminated in accordance with the terms of the MNDA\./,
-    values.mndaTermType === "expires"
-      ? `- [x]     Expires [${values.mndaTermYears} year(s)] from Effective Date.\n- [ ]     Continues until terminated in accordance with the terms of the MNDA.`
-      : `- [ ]     Expires [${values.mndaTermYears} year(s)] from Effective Date.\n- [x]     Continues until terminated in accordance with the terms of the MNDA.`
+    () =>
+      values.mndaTermType === "expires"
+        ? `- [x]     Expires [${sanitizeYears(values.mndaTermYears)} year(s)] from Effective Date.\n- [ ]     Continues until terminated in accordance with the terms of the MNDA.`
+        : `- [ ]     Expires [${sanitizeYears(values.mndaTermYears)} year(s)] from Effective Date.\n- [x]     Continues until terminated in accordance with the terms of the MNDA.`,
+    "MNDA Term"
   );
 
-  result = result.replace(
+  result = replaceTemplate(
+    result,
     /- \[(?:x| )\]\s+\[1 year\(s\)\] from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws\.\r?\n- \[(?:x| )\]\s+In perpetuity\./,
-    values.confidentialityTermType === "duration"
-      ? `- [x]     [${values.confidentialityTermYears} year(s)] from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.\n- [ ]     In perpetuity.`
-      : `- [ ]     [${values.confidentialityTermYears} year(s)] from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.\n- [x]     In perpetuity.`
+    () =>
+      values.confidentialityTermType === "duration"
+        ? `- [x]     [${sanitizeYears(values.confidentialityTermYears)} year(s)] from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.\n- [ ]     In perpetuity.`
+        : `- [ ]     [${sanitizeYears(values.confidentialityTermYears)} year(s)] from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.\n- [x]     In perpetuity.`,
+    "Term of Confidentiality"
   );
 
-  result = result.replace(/\[Fill in state\]/, values.governingLaw || "[Fill in state]");
+  result = replaceTemplate(
+    result,
+    /\[Fill in state\]/,
+    () => values.governingLaw || "[Fill in state]",
+    "Governing Law"
+  );
 
-  result = result.replace(
+  result = replaceTemplate(
+    result,
     /\[Fill in city or county and state[^\]]*\]/,
-    values.jurisdiction || "[Fill in city or county and state]"
+    () => values.jurisdiction || "[Fill in city or county and state]",
+    "Jurisdiction"
   );
 
-  result = result.replace(
+  result = replaceTemplate(
+    result,
     /\|\| PARTY 1 \| PARTY 2 \|\r?\n\|:--- \| :----: \| :----: \|\r?\n\| Signature \| \| \|\r?\n\| Print Name \|[^\n]*\r?\n\| Title \| \| \|\r?\n\| Company \| \| \|\r?\n\| Notice Address <label>Use either email or postal address<\/label> \| \| \|\r?\n\| Date \| \| \|/,
-    [
-      "|| PARTY 1 | PARTY 2 |",
-      "|:--- | :----: | :----: |",
-      "| Signature | | |",
-      `| Print Name | ${values.party1Name} | ${values.party2Name} |`,
-      `| Title | ${values.party1Title} | ${values.party2Title} |`,
-      `| Company | ${values.party1Company} | ${values.party2Company} |`,
-      `| Notice Address <label>Use either email or postal address</label> | ${values.party1NoticeAddress} | ${values.party2NoticeAddress} |`,
-      "| Date | | |",
-    ].join("\n")
+    () =>
+      [
+        "|| PARTY 1 | PARTY 2 |",
+        "|:--- | :----: | :----: |",
+        "| Signature | | |",
+        `| Print Name | ${values.party1Name} | ${values.party2Name} |`,
+        `| Title | ${values.party1Title} | ${values.party2Title} |`,
+        `| Company | ${values.party1Company} | ${values.party2Company} |`,
+        `| Notice Address <label>Use either email or postal address</label> | ${values.party1NoticeAddress} | ${values.party2NoticeAddress} |`,
+        "| Date | | |",
+      ].join("\n"),
+    "Signature Table"
   );
 
   return result;
@@ -131,7 +188,7 @@ export function fillStandardTerms(template: string, values: MndaFormValues): str
 
   for (const [key, value] of Object.entries(replacements)) {
     const pattern = new RegExp(`<span class="coverpage_link">${key}</span>`, "g");
-    result = result.replace(pattern, highlight(value));
+    result = result.replace(pattern, () => highlight(value));
   }
 
   return result;
