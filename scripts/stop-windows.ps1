@@ -1,4 +1,4 @@
 $ErrorActionPreference = "Stop"
-docker stop prelegal
-docker rm prelegal
+Set-Location (Join-Path $PSScriptRoot "..")
+docker compose down
 Write-Host "Pre-Legal stopped."

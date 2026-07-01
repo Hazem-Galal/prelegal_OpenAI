@@ -19,24 +19,27 @@ Prelegal helps individuals and businesses generate standard legal documents with
 
 ### Prerequisites
 
-- Node.js 18+ (or the relevant runtime for this project)
-- A modern web browser
-
-### Installation
-
-```bash
-git clone https://github.com/Hazem-Galal/prelegal.git
-cd prelegal
-npm install
-```
+- Docker
 
 ### Running the app
 
 ```bash
-npm start
+git clone https://github.com/Hazem-Galal/prelegal.git
+cd prelegal
+cp .env.example .env   # fill in OPENAI_API_KEY
 ```
 
-Open your browser and navigate to `http://localhost:3000`.
+Then, depending on your platform:
+
+```bash
+scripts/start-mac.sh       # macOS
+scripts/start-linux.sh     # Linux
+scripts/start-windows.ps1  # Windows
+```
+
+This builds and starts the frontend and backend with Docker Compose. Open `http://localhost:3000`. The backend API is available at `http://localhost:8000`.
+
+Stop the platform with the matching `scripts/stop-*` script for your platform.
 
 ## Usage
 

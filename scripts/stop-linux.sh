@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-docker stop prelegal
-docker rm prelegal
+cd "$(dirname "$0")/.."
+docker compose down
 echo "Pre-Legal stopped."
