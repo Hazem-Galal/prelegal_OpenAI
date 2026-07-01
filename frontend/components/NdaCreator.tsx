@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import NdaForm from "@/components/NdaForm";
+import Chat from "@/components/Chat";
 import NdaPreview from "@/components/NdaPreview";
 import { defaultMndaFormValues, fillMndaDocument, type MndaFormValues } from "@/lib/mnda";
 import { exportElementToPdf } from "@/lib/pdf";
@@ -16,8 +16,17 @@ export default function NdaCreator({ coverPageTemplate, standardTermsTemplate }:
   const [isDownloading, setIsDownloading] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const handleUpdate = <K extends keyof MndaFormValues>(field: K, value: MndaFormValues[K]) => {
-    setValues((previous) => ({ ...previous, [field]: value }));
+  const handleFieldsUpdate = (fields: Partial<MndaFormValues>) => {
+    setValues((previous) => {
+      const next: MndaFormValues = { ...previous };
+      const mutableNext = next as Record<string, unknown>;
+      for (const [key, value] of Object.entries(fields)) {
+        if (value !== null && value !== undefined) {
+          mutableNext[key] = value;
+        }
+      }
+      return next;
+    });
   };
 
   const { coverPage, standardTerms } = useMemo(
@@ -45,15 +54,15 @@ export default function NdaCreator({ coverPageTemplate, standardTermsTemplate }:
           Mutual NDA Creator
         </h1>
         <p className="max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
-          Fill in the form to generate a Common Paper Mutual Non-Disclosure Agreement.
-          The preview on the right updates as you type, and you can download the
-          completed document as a PDF.
+          Chat with the assistant to generate a Common Paper Mutual Non-Disclosure
+          Agreement. The preview on the right updates as you go, and you can download
+          the completed document as a PDF.
         </p>
       </header>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <section>
-          <NdaForm values={values} onUpdate={handleUpdate} />
+          <Chat onFieldsUpdate={handleFieldsUpdate} />
         </section>
 
         <section className="flex flex-col gap-4">
