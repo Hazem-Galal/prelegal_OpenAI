@@ -15,11 +15,15 @@ export default function MyDocumentsPage() {
   useEffect(() => {
     listMyDocuments().then(setDocuments);
     fetch(`${API_BASE_URL}/api/documents`)
-      .then((response) => response.json())
-      .then((data: { templates: CatalogEntry[] }) => {
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { templates: CatalogEntry[] } | null) => {
+        if (!data) return;
         const names: Record<string, string> = {};
         for (const template of data.templates) names[template.id] = template.name;
         setCatalog(names);
+      })
+      .catch(() => {
+        // Leave the catalog empty; the list falls back to raw documentTypeId values.
       });
   }, []);
 
