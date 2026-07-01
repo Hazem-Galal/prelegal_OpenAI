@@ -14,6 +14,10 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    environment:
+      # Server-side (SSR) fetches run inside this container, so they must use
+      # the Compose service name, not the browser-facing localhost URL above.
+      INTERNAL_API_BASE_URL: http://backend:8000
     ports:
       - "3000:3000"
     depends_on:

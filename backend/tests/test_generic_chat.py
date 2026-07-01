@@ -100,16 +100,25 @@ def test_field_collection_turn_falls_back_to_selection_for_unknown_document(fake
     assert response.documentId is None
 
 
-def test_chat_generic_endpoint_returns_selection_response(client, fake_llm):
+def test_chat_generic_endpoint_returns_selection_response(authenticated_client, fake_llm):
     fake_llm("Hi, what do you need?", DocumentSelection(documentId=None))
 
-    response = client.post(
+    response = authenticated_client.post(
         "/api/chat/generic",
         json={"documentId": None, "messages": [{"role": "user", "content": "hello"}]},
     )
 
     assert response.status_code == 200
     assert response.json()["documentId"] is None
+
+
+def test_chat_generic_endpoint_requires_authentication(client):
+    response = client.post(
+        "/api/chat/generic",
+        json={"documentId": None, "messages": [{"role": "user", "content": "hi"}]},
+    )
+
+    assert response.status_code == 401
 
 
 def test_document_content_endpoint_returns_template_text(client):

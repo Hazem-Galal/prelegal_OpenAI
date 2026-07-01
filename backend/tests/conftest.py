@@ -19,3 +19,11 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "test.db")
     with TestClient(main.app) as test_client:
         yield test_client
+
+
+@pytest.fixture()
+def authenticated_client(client):
+    # TestClient persists cookies across requests within one instance, so the
+    # session cookie set by signup carries into every subsequent call.
+    client.post("/api/auth/signup", json={"email": "test-user@example.com", "password": "hunter2"})
+    return client

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Spinner from "@/components/Spinner";
 import type { MndaFormValues } from "@/lib/mnda";
 
 type ChatMessage = {
@@ -44,6 +45,7 @@ export default function Chat({ onFieldsUpdate }: Props) {
       const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ messages: nextMessages }),
       });
       if (!response.ok) throw new Error(`Chat request failed: ${response.status}`);
@@ -74,8 +76,8 @@ export default function Chat({ onFieldsUpdate }: Props) {
           </div>
         ))}
         {isSending && (
-          <div className="self-start rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-            Thinking…
+          <div className="flex items-center gap-2 self-start rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+            <Spinner /> Thinking…
           </div>
         )}
       </div>

@@ -1,21 +1,45 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Chat from "@/components/Chat";
 import NdaForm from "@/components/NdaForm";
 import NdaPreview from "@/components/NdaPreview";
+import { saveDocument } from "@/lib/documents";
 import { defaultMndaFormValues, fillMndaDocument, type MndaFormValues } from "@/lib/mnda";
 import { exportElementToPdf } from "@/lib/pdf";
+
+const DOCUMENT_TYPE_ID = "mutual-nda";
 
 type Props = {
   coverPageTemplate: string;
   standardTermsTemplate: string;
+  initialSavedDocumentId?: string;
+  initialValues?: MndaFormValues;
 };
 
-export default function NdaCreator({ coverPageTemplate, standardTermsTemplate }: Props) {
-  const [values, setValues] = useState<MndaFormValues>(defaultMndaFormValues);
+export default function NdaCreator({
+  coverPageTemplate,
+  standardTermsTemplate,
+  initialSavedDocumentId,
+  initialValues,
+}: Props) {
+  const [savedDocumentId] = useState(() => initialSavedDocumentId ?? crypto.randomUUID());
+  const [values, setValues] = useState<MndaFormValues>(initialValues ?? defaultMndaFormValues);
   const [isDownloading, setIsDownloading] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Skip the very first save while nothing has changed yet from the
+    // starting point (blank defaults, or the resumed document's own values),
+    // so opening the page doesn't immediately create/touch a saved document.
+    const startingValues = initialValues ?? defaultMndaFormValues;
+    if (JSON.stringify(values) === JSON.stringify(startingValues)) return;
+
+    const timeout = setTimeout(() => {
+      saveDocument(savedDocumentId, DOCUMENT_TYPE_ID, values);
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [values, savedDocumentId, initialValues]);
 
   const handleFieldsUpdate = (fields: Partial<MndaFormValues>) => {
     setValues((previous) => {
@@ -52,9 +76,6 @@ export default function NdaCreator({ coverPageTemplate, standardTermsTemplate }:
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
       <header className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-          Prototype
-        </span>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">
           Mutual NDA Creator
         </h1>

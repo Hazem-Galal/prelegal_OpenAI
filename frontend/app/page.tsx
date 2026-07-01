@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 type Mode = "signin" | "signup";
@@ -13,22 +13,35 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/auth/me`, { credentials: "include" }).then((response) => {
+      if (response.ok) router.replace("/app");
+    });
+  }, [router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     try {
-      await fetch(`${API_BASE_URL}/api/auth/${mode}`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-    } catch {
-      // This is a foundation-only login screen: it exercises the real
-      // signup/signin endpoints, but nothing here gates access yet, so a
-      // failed or unreachable request still lets the user into the platform.
-    } finally {
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setError(body?.detail ?? "Something went wrong. Please try again.");
+        return;
+      }
       router.push("/app");
+    } catch {
+      setError("Could not reach the server. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -68,6 +81,12 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+              {error}
+            </p>
+          )}
+
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-dark-navy dark:text-neutral-100">Email</span>
             <input

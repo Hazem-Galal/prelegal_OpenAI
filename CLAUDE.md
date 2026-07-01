@@ -50,9 +50,13 @@ Implementation status below).
 - Backend available at http://localhost:8000
 - The database uses **SQLite** and is recreated from scratch every time the backend
   starts. It has a **users** table backing real `POST /api/auth/signup` /
-  `/api/auth/signin` endpoints (bcrypt-hashed passwords). The frontend login screen at
-  `/` calls these endpoints but doesn't gate on the result yet — it always continues
-  into `/app` (no real auth enforcement yet).
+  `/api/auth/signin` endpoints (bcrypt-hashed passwords), a **sessions** table backing
+  cookie-based login (HttpOnly `session_id` cookie), and a **documents** table storing
+  each user's generated documents (auto-saved, keyed by a client-generated UUID). All
+  three tables reset on every backend restart, including active sessions — the
+  frontend's `/app/**` layout re-validates against `GET /api/auth/me` on every request
+  rather than trusting cookie presence alone, so a stale post-restart cookie correctly
+  bounces back to sign-in instead of leaving a broken half-authenticated state.
 
 ## Color Scheme
 - Accent Yellow: `#ecad0a`
@@ -85,3 +89,18 @@ Implementation status below).
   per-document schema authored by hand — scales to new templates automatically). Shared
   OpenAI-calling logic (`reply`/`extract`) lives in `backend/app/llm.py`, used by both the
   MNDA and generic pipelines.
+- **PR-7 (done)**: real multi-user support and final polish. Sign-in/sign-up now actually
+  gates access — a successful `signup`/`signin` sets an HttpOnly `session_id` cookie
+  (backed by a new `sessions` table); `frontend/app/app/layout.tsx` is a server-side auth
+  gate for everything under `/app/**`, redirecting to `/` if the session is missing or
+  invalid. `/api/chat` and `/api/chat/generic` now require authentication too. Every
+  document a user creates is auto-saved (debounced, ~800ms) into a new `documents` table
+  keyed by a client-generated UUID; `/app/documents` lists a user's past documents, and
+  clicking one resumes it fully (`/app?resume={id}`) with the same UUID continuing to
+  upsert into the same row. Polish: the login screen's brand palette is now the one
+  color system app-wide (`--color-primary` repointed to the brand blue — no per-component
+  class changes needed), a shared `AppHeader` (brand, "My Documents", sign-out) appears
+  on every authenticated page, the "Prototype" badge is gone, loading/thinking states use
+  a small spinner, and both preview components have dark-mode styling. Every generated
+  document (and its exported PDF) now shows a "draft, not reviewed by an attorney"
+  disclaimer.

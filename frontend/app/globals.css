@@ -9,13 +9,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: #326f84;
+  --color-primary: #209dd7;
   --color-primary-foreground: #ffffff;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Brand palette (see CLAUDE.md). Additive tokens for new surfaces like the
-     login screen; the existing NDA creator keeps its current styling. */
+  /* Brand palette (see CLAUDE.md). --color-primary above is the brand blue,
+     so every screen shares one consistent palette. */
   --color-accent-yellow: #ecad0a;
   --color-blue-primary: #209dd7;
   --color-purple-secondary: #753991;
@@ -37,15 +37,15 @@ body {
 }
 
 .filled-field {
-  background-color: rgba(50, 111, 132, 0.1);
-  border-bottom: 1px solid rgba(50, 111, 132, 0.35);
+  background-color: rgba(32, 157, 215, 0.1);
+  border-bottom: 1px solid rgba(32, 157, 215, 0.35);
   border-radius: 3px;
   padding: 0 3px;
 }
 
 @media (prefers-color-scheme: dark) {
   .filled-field {
-    background-color: rgba(50, 111, 132, 0.25);
+    background-color: rgba(32, 157, 215, 0.25);
     border-bottom-color: rgba(147, 197, 214, 0.5);
   }
 }
