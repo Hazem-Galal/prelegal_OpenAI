@@ -10,49 +10,51 @@ type Props = {
   mndaStandardTermsTemplate: string;
 };
 
-const SELECTION_GREETING =
-  "Hi! What kind of legal agreement do you need help with today?";
+const SWITCH_GREETING = "What kind of legal agreement do you need instead?";
 
 export default function DocumentChatLauncher({
   mndaCoverPageTemplate,
   mndaStandardTermsTemplate,
 }: Props) {
-  const [documentId, setDocumentId] = useState<string | null>(null);
+  const [documentId, setDocumentId] = useState("mutual-nda");
+  const [isSwitching, setIsSwitching] = useState(false);
 
-  if (documentId === "mutual-nda") {
-    return (
-      <NdaCreator
-        coverPageTemplate={mndaCoverPageTemplate}
-        standardTermsTemplate={mndaStandardTermsTemplate}
-      />
-    );
-  }
-
-  if (documentId) {
-    return <GenericDocumentCreator documentId={documentId} />;
-  }
+  const handleDocumentSwitch = (newDocumentId: string) => {
+    setDocumentId(newDocumentId);
+    setIsSwitching(false);
+  };
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
-      <header className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-          Prototype
-        </span>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">
-          Legal Document Creator
-        </h1>
-        <p className="max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
-          Tell the assistant what kind of agreement you need, and it will guide you
-          through creating it.
-        </p>
-      </header>
+    <div className="flex flex-col gap-6">
+      <div className="mx-auto w-full max-w-6xl px-6 pt-6">
+        <button
+          type="button"
+          onClick={() => setIsSwitching((previous) => !previous)}
+          className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+        >
+          {isSwitching ? "Cancel" : "Need a different document instead?"}
+        </button>
+      </div>
 
-      <GenericChat
-        documentId={null}
-        greeting={SELECTION_GREETING}
-        onDocumentIdChange={setDocumentId}
-        onFieldsUpdate={() => {}}
-      />
-    </main>
+      {isSwitching && (
+        <div className="mx-auto w-full max-w-6xl px-6">
+          <GenericChat
+            documentId={null}
+            greeting={SWITCH_GREETING}
+            onDocumentIdChange={handleDocumentSwitch}
+            onFieldsUpdate={() => {}}
+          />
+        </div>
+      )}
+
+      {documentId === "mutual-nda" ? (
+        <NdaCreator
+          coverPageTemplate={mndaCoverPageTemplate}
+          standardTermsTemplate={mndaStandardTermsTemplate}
+        />
+      ) : (
+        <GenericDocumentCreator documentId={documentId} />
+      )}
+    </div>
   );
 }
