@@ -46,6 +46,8 @@ chat-to-document flow before we build the backend.
     scripts/stop-windows.ps1
 
 - Backend available at http://localhost:8000
+- The database uses **SQLite** and is created from scratch each time the Docker
+  container is brought up. It includes a **users table** supporting sign up and sign in.
 
 ## Color Scheme
 - Accent Yellow: `#ecad0a`
