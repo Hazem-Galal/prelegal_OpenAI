@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app import chat
+from app import chat, llm
 
 
 class FakeResponses:
@@ -27,7 +27,7 @@ class FakeClient:
 @pytest.fixture()
 def fake_llm(monkeypatch):
     def install(reply_text: str, parsed_fields: chat.MndaFields) -> None:
-        monkeypatch.setattr(chat, "_get_client", lambda: FakeClient(reply_text, parsed_fields))
+        monkeypatch.setattr(llm, "get_client", lambda: FakeClient(reply_text, parsed_fields))
 
     return install
 

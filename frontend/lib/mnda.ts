@@ -1,3 +1,5 @@
+import { highlight } from "@/lib/highlight";
+
 export type MndaFormValues = {
   party1Name: string;
   party1Company: string;
@@ -94,11 +96,6 @@ function describeConfidentialityTerm(values: MndaFormValues): string {
   return values.confidentialityTermType === "duration"
     ? `${sanitizeYears(values.confidentialityTermYears)} year(s) from Effective Date`
     : "in perpetuity";
-}
-
-function highlight(value: string): string {
-  const safe = value && value.trim() ? value : "[Not provided]";
-  return `<span class="filled-field">${safe}</span>`;
 }
 
 /** Fills the Mutual NDA cover page template with the form values, replacing each bracketed placeholder in place. */

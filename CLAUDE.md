@@ -66,12 +66,22 @@ Implementation status below).
   real signup/signin, docker-compose (backend + frontend), platform start/stop scripts,
   fake login screen at `/` (redirects into `/app` regardless of auth result). The
   existing form-based Mutual NDA creator moved from `/` to `/app` unchanged.
-- **PR-5 (done)**: replaced the Mutual NDA creator's field-by-field form with a freeform
-  AI chat (`POST /api/chat`, stateless — the frontend resends the full message history
-  each turn, no backend persistence). Two LLM calls per turn: a conversational reply
-  (`OPENAI_CHAT_MODEL`, default `gpt-4.1`) and a structured-output extraction pass
-  (`OPENAI_EXTRACTION_MODEL`, default `gpt-4.1-mini`) that re-derives the known MNDA
-  fields from the whole conversation. Still scoped to the Mutual NDA only.
-- **PR-6 (next up)**: expand document creation beyond the Mutual NDA to all templates
-  in `templates/templates.json`. If the user asks for an unsupported document, engage
-  with them, explain it can't be generated, and offer the closest available template.
+- **PR-5 (done)**: added a freeform AI chat (`POST /api/chat`, stateless — the frontend
+  resends the full message history each turn, no backend persistence) as an additional
+  way to fill out the Mutual NDA creator, alongside (not replacing) the existing
+  field-by-field form — both write into the same shared state. Two LLM calls per turn:
+  a conversational reply (`OPENAI_CHAT_MODEL`, default `gpt-4.1`) and a structured-output
+  extraction pass (`OPENAI_EXTRACTION_MODEL`, default `gpt-4.1-mini`) that re-derives the
+  known MNDA fields from the whole conversation. Still scoped to the Mutual NDA only.
+- **PR-6 (done)**: expanded document creation to all templates in `templates/templates.json`.
+  `/app` still defaults straight into the Mutual NDA's chat+form+preview (unchanged from
+  PR-5); a "Need a different document instead?" link reveals an inline document-selection
+  chat (`POST /api/chat/generic`) without ever hiding the current document's form/preview.
+  The LLM matches free text against the catalog and offers the closest available document
+  if unsupported. Once confirmed, `mutual-nda` hands off to the existing, untouched MNDA
+  pipeline (chat + form); every other document goes through a new generic pipeline —
+  chat **and** a field-by-field form, mirroring MNDA — that auto-derives its field list at
+  runtime from the template's own `<span class="X_link">Variable</span>` markup (no
+  per-document schema authored by hand — scales to new templates automatically). Shared
+  OpenAI-calling logic (`reply`/`extract`) lives in `backend/app/llm.py`, used by both the
+  MNDA and generic pipelines.

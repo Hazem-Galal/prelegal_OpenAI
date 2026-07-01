@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
-import os
 import sqlite3
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import AsyncIterator
 
 import bcrypt
@@ -14,11 +11,13 @@ from pydantic import BaseModel, EmailStr
 
 from app import db
 from app.chat import ChatRequest, ChatResponse, run_chat_turn
-
-# Project root is two levels up: backend/app/main.py -> prelegal/.
-# Overridable via CATALOG_PATH so the container can point elsewhere.
-ROOT = Path(__file__).resolve().parents[2]
-CATALOG_PATH = Path(os.environ.get("CATALOG_PATH", ROOT / "templates" / "templates.json"))
+from app.generic_chat import GenericChatRequest, GenericChatResponse, run_generic_chat_turn
+from app.templates_catalog import (
+    CatalogNotFoundError,
+    TemplateNotFoundError,
+    load_catalog,
+    read_document_content,
+)
 
 
 @asynccontextmanager
@@ -38,12 +37,6 @@ app.add_middleware(
 )
 
 
-def load_catalog() -> dict:
-    if not CATALOG_PATH.exists():
-        raise HTTPException(status_code=500, detail=f"Catalog not found at {CATALOG_PATH}")
-    return json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
-
-
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -52,7 +45,19 @@ def health() -> dict:
 @app.get("/api/documents")
 def list_documents() -> dict:
     """Return the catalog of available legal documents and their fields."""
-    return load_catalog()
+    try:
+        return load_catalog()
+    except CatalogNotFoundError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+
+@app.get("/api/documents/{document_id}/content")
+def get_document_content(document_id: str) -> dict:
+    """Return the raw markdown template(s) for one document, by catalog id."""
+    try:
+        return read_document_content(document_id)
+    except TemplateNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error))
 
 
 class AuthRequest(BaseModel):
@@ -89,3 +94,8 @@ def signin(request: AuthRequest) -> UserResponse:
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
     return run_chat_turn(request)
+
+
+@app.post("/api/chat/generic", response_model=GenericChatResponse)
+def chat_generic(request: GenericChatRequest) -> GenericChatResponse:
+    return run_generic_chat_turn(request)

@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { Metadata } from "next";
-import NdaCreator from "@/components/NdaCreator";
+import DocumentChatLauncher from "@/components/DocumentChatLauncher";
 
 export const metadata: Metadata = {
-  title: "Mutual NDA Creator | Prelegal",
+  title: "Legal Document Creator | Prelegal",
   description:
-    "Chat with an AI assistant or fill in the form to generate a Common Paper Mutual Non-Disclosure Agreement and download it as a PDF.",
+    "Chat with an AI assistant to create a legal agreement from a Common Paper template and download it as a PDF.",
 };
 
 function readTemplate(fileName: string): string {
@@ -25,9 +25,9 @@ export default function Page() {
   const standardTermsTemplate = readTemplate("Mutual-NDA.md");
 
   return (
-    <NdaCreator
-      coverPageTemplate={coverPageTemplate}
-      standardTermsTemplate={standardTermsTemplate}
+    <DocumentChatLauncher
+      mndaCoverPageTemplate={coverPageTemplate}
+      mndaStandardTermsTemplate={standardTermsTemplate}
     />
   );
 }
