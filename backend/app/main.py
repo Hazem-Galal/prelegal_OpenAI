@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 
 from app import db
+from app.chat import ChatRequest, ChatResponse, run_chat_turn
 
 # Project root is two levels up: backend/app/main.py -> prelegal/.
 # Overridable via CATALOG_PATH so the container can point elsewhere.
@@ -85,5 +86,6 @@ def signin(request: AuthRequest) -> UserResponse:
     return UserResponse(id=user["id"], email=user["email"])
 
 
-# NOTE: The chat endpoint that drives field extraction is a Jira feature.
-# When you build it, call the LLM via the `openai-llm` skill (gpt-4.1 + structured outputs).
+@app.post("/api/chat", response_model=ChatResponse)
+def chat(request: ChatRequest) -> ChatResponse:
+    return run_chat_turn(request)

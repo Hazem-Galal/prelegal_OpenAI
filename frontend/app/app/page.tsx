@@ -6,7 +6,7 @@ import NdaCreator from "@/components/NdaCreator";
 export const metadata: Metadata = {
   title: "Mutual NDA Creator | Prelegal",
   description:
-    "Fill in a form to generate a Common Paper Mutual Non-Disclosure Agreement and download it as a PDF.",
+    "Chat with an AI assistant or fill in the form to generate a Common Paper Mutual Non-Disclosure Agreement and download it as a PDF.",
 };
 
 function readTemplate(fileName: string): string {

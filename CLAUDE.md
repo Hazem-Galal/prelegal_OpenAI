@@ -7,8 +7,9 @@ The document templates live in the `templates/` directory, each in its own subfo
 
 @templates/templates.json
 
-The initial implementation is a **frontend-only prototype** — enough to demonstrate the
-chat-to-document flow before we build the backend.
+The initial prototype was frontend-only, form-based, and limited to the Mutual NDA. The
+backend and a real chat-to-document flow are being built up ticket by ticket (see
+Implementation status below).
 
 > Full business requirements are NOT in this file. They live in Jira (see Development
 > process). This file gives the overall context so the work stays coherent.
@@ -28,7 +29,8 @@ chat-to-document flow before we build the backend.
   interpret the results and populate the fields in the legal document reliably.
 
 ## Technical design
-- The entire project is packaged into a **Docker container**.
+- The project runs as **two Docker containers** via `docker-compose.yml`: `backend` and
+  `frontend`. `scripts/start-*`/`stop-*` wrap `docker compose up --build` / `down`.
 - The **backend** lives in `backend/` — a **`uv`** project using **FastAPI**.
 - The **frontend** lives in `frontend/`.
 - There should be scripts in `scripts/` for each platform:
@@ -46,8 +48,11 @@ chat-to-document flow before we build the backend.
     scripts/stop-windows.ps1
 
 - Backend available at http://localhost:8000
-- The database uses **SQLite** and is created from scratch each time the Docker
-  container is brought up. It includes a **users table** supporting sign up and sign in.
+- The database uses **SQLite** and is recreated from scratch every time the backend
+  starts. It has a **users** table backing real `POST /api/auth/signup` /
+  `/api/auth/signin` endpoints (bcrypt-hashed passwords). The frontend login screen at
+  `/` calls these endpoints but doesn't gate on the result yet — it always continues
+  into `/app` (no real auth enforcement yet).
 
 ## Color Scheme
 - Accent Yellow: `#ecad0a`
@@ -55,3 +60,18 @@ chat-to-document flow before we build the backend.
 - Purple Secondary: `#753991` (submit buttons)
 - Dark Navy: `#032147` (headings)
 - Gray Text: `#888888`
+
+## Implementation status
+- **PR-4 (done)**: V1 technical foundation — FastAPI backend, SQLite `users` table with
+  real signup/signin, docker-compose (backend + frontend), platform start/stop scripts,
+  fake login screen at `/` (redirects into `/app` regardless of auth result). The
+  existing form-based Mutual NDA creator moved from `/` to `/app` unchanged.
+- **PR-5 (done)**: replaced the Mutual NDA creator's field-by-field form with a freeform
+  AI chat (`POST /api/chat`, stateless — the frontend resends the full message history
+  each turn, no backend persistence). Two LLM calls per turn: a conversational reply
+  (`OPENAI_CHAT_MODEL`, default `gpt-4.1`) and a structured-output extraction pass
+  (`OPENAI_EXTRACTION_MODEL`, default `gpt-4.1-mini`) that re-derives the known MNDA
+  fields from the whole conversation. Still scoped to the Mutual NDA only.
+- **PR-6 (next up)**: expand document creation beyond the Mutual NDA to all templates
+  in `templates/templates.json`. If the user asks for an unsupported document, engage
+  with them, explain it can't be generated, and offer the closest available template.
