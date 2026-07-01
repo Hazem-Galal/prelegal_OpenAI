@@ -119,6 +119,7 @@ def test_document_content_endpoint_returns_template_text(client):
     body = response.json()
     assert "standardTerms" in body
     assert body["coverPage"] is None
+    assert "Customer" in body["fields"]
 
 
 def test_document_content_endpoint_includes_cover_page_for_mnda(client):

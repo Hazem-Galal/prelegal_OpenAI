@@ -4,6 +4,8 @@ import json
 import os
 from pathlib import Path
 
+from app.fields import extract_field_variables
+
 # Project root is two levels up: backend/app/templates_catalog.py -> prelegal/.
 # Overridable via CATALOG_PATH so the container can point elsewhere.
 ROOT = Path(__file__).resolve().parents[2]
@@ -36,11 +38,13 @@ def read_template_file(relative_path: str) -> str:
 
 
 def read_document_content(document_id: str) -> dict:
-    """Return a document's display name and raw markdown file(s), by catalog id."""
+    """Return a document's display name, raw markdown file(s), and fill-in field names."""
     meta = get_template_meta(document_id)
     files = meta["files"]
+    standard_terms = read_template_file(files["standardTerms"])
     return {
         "name": meta["name"],
-        "standardTerms": read_template_file(files["standardTerms"]),
+        "standardTerms": standard_terms,
         "coverPage": read_template_file(files["coverPage"]) if "coverPage" in files else None,
+        "fields": extract_field_variables(standard_terms),
     }

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import GenericChat from "@/components/GenericChat";
+import GenericForm from "@/components/GenericForm";
 import GenericPreview from "@/components/GenericPreview";
 import { fillGenericDocument, type FieldValues } from "@/lib/genericDocument";
 import { exportElementToPdf } from "@/lib/pdf";
@@ -13,6 +14,7 @@ type Props = {
 type DocumentContent = {
   name: string;
   standardTerms: string;
+  fields: string[];
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -47,6 +49,10 @@ export default function GenericDocumentCreator({ documentId }: Props) {
     });
   };
 
+  const handleFieldUpdate = (field: string, value: string) => {
+    setFields((previous) => ({ ...previous, [field]: value }));
+  };
+
   const filledDocument = useMemo(
     () => (content ? fillGenericDocument(content.standardTerms, fields) : ""),
     [content, fields]
@@ -74,19 +80,21 @@ export default function GenericDocumentCreator({ documentId }: Props) {
           {content.name}
         </h1>
         <p className="max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
-          Chat with the assistant to generate this document. The preview on the right
-          updates as you go, and you can download the completed document as a PDF.
+          Chat with the assistant or fill in the form to generate this document —
+          both update the same document. The preview on the right updates as you go,
+          and you can download the completed document as a PDF.
         </p>
       </header>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <section>
+        <section className="flex flex-col gap-6">
           <GenericChat
             documentId={documentId}
             greeting={`Great — let's fill out your ${content.name}. What can you tell me first?`}
             onDocumentIdChange={() => {}}
             onFieldsUpdate={handleFieldsUpdate}
           />
+          <GenericForm fields={content.fields} values={fields} onUpdate={handleFieldUpdate} />
         </section>
 
         <section className="flex flex-col gap-4">
