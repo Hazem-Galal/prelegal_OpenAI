@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Spinner from "@/components/Spinner";
 import type { FieldValues } from "@/lib/genericDocument";
 
 type ChatMessage = {
@@ -41,6 +42,7 @@ export default function GenericChat({ documentId, greeting, onDocumentIdChange, 
       const response = await fetch(`${API_BASE_URL}/api/chat/generic`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ documentId, messages: nextMessages }),
       });
       if (!response.ok) throw new Error(`Chat request failed: ${response.status}`);
@@ -72,8 +74,8 @@ export default function GenericChat({ documentId, greeting, onDocumentIdChange, 
           </div>
         ))}
         {isSending && (
-          <div className="self-start rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-            Thinking…
+          <div className="flex items-center gap-2 self-start rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+            <Spinner /> Thinking…
           </div>
         )}
       </div>

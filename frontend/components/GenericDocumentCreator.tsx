@@ -4,11 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import GenericChat from "@/components/GenericChat";
 import GenericForm from "@/components/GenericForm";
 import GenericPreview from "@/components/GenericPreview";
+import Spinner from "@/components/Spinner";
+import { saveDocument } from "@/lib/documents";
 import { fillGenericDocument, type FieldValues } from "@/lib/genericDocument";
 import { exportElementToPdf } from "@/lib/pdf";
 
 type Props = {
   documentId: string;
+  initialSavedDocumentId?: string;
+  initialFields?: FieldValues;
 };
 
 type DocumentContent = {
@@ -19,9 +23,14 @@ type DocumentContent = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-export default function GenericDocumentCreator({ documentId }: Props) {
+export default function GenericDocumentCreator({
+  documentId,
+  initialSavedDocumentId,
+  initialFields,
+}: Props) {
+  const [savedDocumentId] = useState(() => initialSavedDocumentId ?? crypto.randomUUID());
   const [content, setContent] = useState<DocumentContent | null>(null);
-  const [fields, setFields] = useState<FieldValues>({});
+  const [fields, setFields] = useState<FieldValues>(initialFields ?? {});
   const [isDownloading, setIsDownloading] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +45,19 @@ export default function GenericDocumentCreator({ documentId }: Props) {
       cancelled = true;
     };
   }, [documentId]);
+
+  useEffect(() => {
+    // Skip the very first save while nothing has changed yet from the
+    // starting point (empty, or the resumed document's own fields), so
+    // opening the page doesn't immediately create/touch a saved document.
+    const startingFields = initialFields ?? {};
+    if (JSON.stringify(fields) === JSON.stringify(startingFields)) return;
+
+    const timeout = setTimeout(() => {
+      saveDocument(savedDocumentId, documentId, fields);
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [fields, savedDocumentId, documentId, initialFields]);
 
   const handleFieldsUpdate = (update: FieldValues) => {
     setFields((previous) => {
@@ -69,13 +91,16 @@ export default function GenericDocumentCreator({ documentId }: Props) {
   };
 
   if (!content) {
-    return <p className="px-6 py-10 text-sm text-neutral-500 dark:text-neutral-400">Loading document…</p>;
+    return (
+      <p className="flex items-center gap-2 px-6 py-10 text-sm text-neutral-500 dark:text-neutral-400">
+        <Spinner /> Loading document…
+      </p>
+    );
   }
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
       <header className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-primary">Prototype</span>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">
           {content.name}
         </h1>

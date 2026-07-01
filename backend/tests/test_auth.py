@@ -52,3 +52,38 @@ def test_signin_with_unknown_email_is_rejected(client):
     response = client.post("/api/auth/signin", json={"email": "nobody@example.com", "password": "hunter2"})
 
     assert response.status_code == 401
+
+
+def test_signup_sets_session_cookie(client):
+    response = client.post("/api/auth/signup", json={"email": "d@example.com", "password": "hunter2"})
+
+    assert "session_id" in response.cookies
+
+
+def test_signin_sets_session_cookie(client):
+    client.post("/api/auth/signup", json={"email": "e@example.com", "password": "hunter2"})
+
+    response = client.post("/api/auth/signin", json={"email": "e@example.com", "password": "hunter2"})
+
+    assert "session_id" in response.cookies
+
+
+def test_me_succeeds_with_valid_session(authenticated_client):
+    response = authenticated_client.get("/api/auth/me")
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "test-user@example.com"
+
+
+def test_me_rejects_missing_session(client):
+    response = client.get("/api/auth/me")
+
+    assert response.status_code == 401
+
+
+def test_signout_clears_session(authenticated_client):
+    signout_response = authenticated_client.post("/api/auth/signout")
+    me_response = authenticated_client.get("/api/auth/me")
+
+    assert signout_response.status_code == 200
+    assert me_response.status_code == 401
