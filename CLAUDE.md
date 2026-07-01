@@ -74,11 +74,14 @@ Implementation status below).
   extraction pass (`OPENAI_EXTRACTION_MODEL`, default `gpt-4.1-mini`) that re-derives the
   known MNDA fields from the whole conversation. Still scoped to the Mutual NDA only.
 - **PR-6 (done)**: expanded document creation to all templates in `templates/templates.json`.
-  `/app` now starts with a document-selection chat (`POST /api/chat/generic`); the LLM
-  matches free text against the catalog and offers the closest available document if
-  unsupported. Once confirmed, `mutual-nda` hands off to the existing, untouched MNDA
-  pipeline (chat + form); every other document goes through a new generic, chat-only
-  pipeline that auto-derives its field list at runtime from the template's own
-  `<span class="X_link">Variable</span>` markup (no per-document schema authored by
-  hand — scales to new templates automatically). Shared OpenAI-calling logic (`reply`/
-  `extract`) lives in `backend/app/llm.py`, used by both the MNDA and generic pipelines.
+  `/app` still defaults straight into the Mutual NDA's chat+form+preview (unchanged from
+  PR-5); a "Need a different document instead?" link reveals an inline document-selection
+  chat (`POST /api/chat/generic`) without ever hiding the current document's form/preview.
+  The LLM matches free text against the catalog and offers the closest available document
+  if unsupported. Once confirmed, `mutual-nda` hands off to the existing, untouched MNDA
+  pipeline (chat + form); every other document goes through a new generic pipeline —
+  chat **and** a field-by-field form, mirroring MNDA — that auto-derives its field list at
+  runtime from the template's own `<span class="X_link">Variable</span>` markup (no
+  per-document schema authored by hand — scales to new templates automatically). Shared
+  OpenAI-calling logic (`reply`/`extract`) lives in `backend/app/llm.py`, used by both the
+  MNDA and generic pipelines.
