@@ -1,27 +1,10 @@
 from __future__ import annotations
 
-import os
 from typing import Literal, Optional
 
-from openai import OpenAI
 from pydantic import BaseModel
 
-CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", "gpt-4.1")
-EXTRACTION_MODEL = os.environ.get("OPENAI_EXTRACTION_MODEL", "gpt-4.1-mini")
-
-_client: OpenAI | None = None
-
-
-def _get_client() -> OpenAI:
-    global _client
-    if _client is None:
-        _client = OpenAI()
-    return _client
-
-
-class ChatMessage(BaseModel):
-    role: Literal["user", "assistant"]
-    content: str
+from app.llm import ChatMessage, extract, reply
 
 
 class ChatRequest(BaseModel):
@@ -68,27 +51,12 @@ in this conversation. Only fill in a field once the user has actually stated it;
 leave anything not yet discussed as null."""
 
 
-def _to_openai_messages(system_prompt: str, messages: list[ChatMessage]) -> list[dict]:
-    return [{"role": "system", "content": system_prompt}] + [
-        {"role": message.role, "content": message.content} for message in messages
-    ]
-
-
 def _reply(messages: list[ChatMessage]) -> str:
-    response = _get_client().responses.create(
-        model=CHAT_MODEL,
-        input=_to_openai_messages(CHAT_SYSTEM_PROMPT, messages),
-    )
-    return response.output_text
+    return reply(CHAT_SYSTEM_PROMPT, messages)
 
 
 def _extract_fields(messages: list[ChatMessage]) -> MndaFields:
-    response = _get_client().responses.parse(
-        model=EXTRACTION_MODEL,
-        input=_to_openai_messages(EXTRACTION_SYSTEM_PROMPT, messages),
-        text_format=MndaFields,
-    )
-    return response.output_parsed
+    return extract(EXTRACTION_SYSTEM_PROMPT, messages, MndaFields)
 
 
 def run_chat_turn(request: ChatRequest) -> ChatResponse:
