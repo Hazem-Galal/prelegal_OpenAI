@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import Chat from "@/components/Chat";
+import NdaForm from "@/components/NdaForm";
 import NdaPreview from "@/components/NdaPreview";
 import { defaultMndaFormValues, fillMndaDocument, type MndaFormValues } from "@/lib/mnda";
 import { exportElementToPdf } from "@/lib/pdf";
@@ -29,6 +30,10 @@ export default function NdaCreator({ coverPageTemplate, standardTermsTemplate }:
     });
   };
 
+  const handleUpdate = <K extends keyof MndaFormValues>(field: K, value: MndaFormValues[K]) => {
+    setValues((previous) => ({ ...previous, [field]: value }));
+  };
+
   const { coverPage, standardTerms } = useMemo(
     () => fillMndaDocument(coverPageTemplate, standardTermsTemplate, values),
     [coverPageTemplate, standardTermsTemplate, values]
@@ -54,15 +59,17 @@ export default function NdaCreator({ coverPageTemplate, standardTermsTemplate }:
           Mutual NDA Creator
         </h1>
         <p className="max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
-          Chat with the assistant to generate a Common Paper Mutual Non-Disclosure
-          Agreement. The preview on the right updates as you go, and you can download
-          the completed document as a PDF.
+          Chat with the assistant or fill in the form to generate a Common Paper
+          Mutual Non-Disclosure Agreement — both update the same document. The
+          preview on the right updates as you go, and you can download the
+          completed document as a PDF.
         </p>
       </header>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <section>
+        <section className="flex flex-col gap-6">
           <Chat onFieldsUpdate={handleFieldsUpdate} />
+          <NdaForm values={values} onUpdate={handleUpdate} />
         </section>
 
         <section className="flex flex-col gap-4">
